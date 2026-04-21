@@ -1,264 +1,315 @@
 # PET CARE SERVICE MANAGEMENT SYSTEM
 
-## 1. Giới thiệu
+## 1. Giới thiệu hệ thống
 
-Dự án là hệ thống quản lý dịch vụ chăm sóc thú cưng được xây dựng nhằm hỗ trợ các hoạt động như:
+Hệ thống quản lý dịch vụ chăm sóc thú cưng được xây dựng nhằm hỗ trợ các nghiệp vụ:
 
 * Quản lý khách hàng
 * Quản lý thú cưng
-* Đặt lịch dịch vụ
+* Quản lý dịch vụ
+* Đặt lịch chăm sóc (Appointment)
 * Quản lý nhân viên
 * Thanh toán và hóa đơn
 * Đánh giá dịch vụ
 
-Hệ thống được phát triển theo mô hình Web Application với backend sử dụng Laravel và frontend sử dụng VueJS.
+Hệ thống được xây dựng dưới dạng **RESTful API sử dụng Laravel**, phục vụ cho việc tích hợp với frontend hoặc mobile app.
 
 ---
 
 ## 2. Công nghệ sử dụng
 
-### Backend
-
-* Laravel Framework (PHP)
-* RESTful API
-* MySQL
-
-### Frontend
-
-* VueJS
-* Vite
-* Axios (gọi API)
-
-### Khác
-
-* Composer
-* NodeJS & NPM
-* MVC Architecture
+* Backend: Laravel (PHP)
+* Cơ sở dữ liệu: MySQL
+* ORM: Eloquent ORM
+* API: RESTful API
+* Công cụ: Composer, Artisan CLI
 
 ---
 
 ## 3. Kiến trúc hệ thống
 
-Dự án được xây dựng theo mô hình:
+Hệ thống sử dụng mô hình:
 
-### MVC (Model - View - Controller)
+### MVC (Model - Controller - Routing)
 
-* Model: Đại diện cho dữ liệu và xử lý logic liên quan đến database
-* Controller: Xử lý request từ client, gọi Model và trả về response
-* View: Giao diện người dùng (VueJS)
-
-Ngoài ra, hệ thống sử dụng API để giao tiếp giữa frontend và backend.
+* **Model (app/Models)**: Đại diện cho bảng trong database
+* **Controller (app/Http/Controllers/Api)**: Xử lý logic và API
+* **Routes (routes/api.php)**: Định nghĩa endpoint API
 
 ---
 
-## 4. Cấu trúc thư mục chính
+## 4. Cấu trúc thư mục 
 
-```
+```id="tree1"
 pet-care-service/
 │
 ├── app/
+│   ├── Http/
+│   │   └── Controllers/
+│   │       └── Api/
+│   │           ├── AppointmentController.php
+│   │           ├── AuthController.php
+│   │           ├── PetController.php
+│   │           └── ServiceController.php
+│   │
 │   ├── Models/
-│   ├── Http/Controllers/Api/
+│   │   ├── Appointment.php
+│   │   ├── Customer.php
+│   │   ├── Invoice.php
+│   │   ├── Payment.php
+│   │   ├── Pet.php
+│   │   ├── Review.php
+│   │   ├── Service.php
+│   │   ├── Staff.php
+│   │   ├── StaffService.php
+│   │   └── User.php
 │
 ├── database/
 │   ├── migrations/
 │   ├── seeders/
 │   └── schema.sql
 │
-├── resources/
-│   ├── js/ (VueJS)
-│   ├── views/
-│
 ├── routes/
 │   ├── api.php
 │   ├── web.php
 │
-├── public/
+├── resources/views/
 ├── config/
+├── storage/
+├── tests/
+├── artisan
+├── composer.json
 ```
 
 ---
 
-## 5. Phân tích chi tiết các Model
+## 5. PHÂN TÍCH CHI TIẾT MODEL 
 
-Hệ thống sử dụng Eloquent ORM của Laravel để quản lý dữ liệu.
-
-### 5.1 User
-
-* Đại diện tài khoản đăng nhập hệ thống
-* Dùng cho authentication
-* Có thể là admin, staff hoặc customer
+Hệ thống sử dụng **Eloquent ORM** để ánh xạ mỗi Model với một bảng trong database.
 
 ---
 
-### 5.2 Customer
+### 5.1 Model: User
+
+#### Vai trò
+
+* Đại diện cho tài khoản đăng nhập hệ thống
+* Dùng cho xác thực (Authentication)
+
+#### Chức năng
+
+* Đăng ký
+* Đăng nhập (AuthController xử lý)
+* Phân quyền (có thể mở rộng)
+
+---
+
+### 5.2 Model: Customer
+
+#### Vai trò
 
 * Lưu thông tin khách hàng
-* Quan hệ:
 
-  * 1 Customer có nhiều Pet
-  * 1 Customer có nhiều Appointment
+#### Quan hệ
 
----
+* 1 Customer có nhiều Pet
+* 1 Customer có nhiều Appointment
+* 1 Customer có nhiều Review
 
-### 5.3 Pet
+#### Ý nghĩa
 
-* Lưu thông tin thú cưng (tên, loại, tuổi,...)
-* Quan hệ:
-
-  * Thuộc về 1 Customer
-  * Có nhiều Appointment
+Là thực thể trung tâm đại diện người sử dụng dịch vụ.
 
 ---
 
-### 5.4 Service
+### 5.3 Model: Pet
 
-* Danh sách các dịch vụ chăm sóc thú cưng
+#### Vai trò
+
+* Lưu thông tin thú cưng:
+
+  * Tên
+  * Loại
+  * Tuổi
+  * Giống
+
+#### Quan hệ
+
+* Thuộc về 1 Customer (belongsTo)
+* Có nhiều Appointment
+
+#### Cách sử dụng
+
+* Khi khách hàng đặt lịch, phải chọn Pet
+
+---
+
+### 5.4 Model: Service
+
+#### Vai trò
+
+* Danh sách dịch vụ:
 
   * Tắm
   * Cắt tỉa
   * Khám bệnh
-* Quan hệ:
 
-  * Nhiều Service có thể được thực hiện bởi nhiều Staff
+#### Quan hệ
+
+* Many-to-many với Staff (thông qua StaffService)
+* Có nhiều Appointment
+* Có nhiều Review
 
 ---
 
-### 5.5 Staff
+### 5.5 Model: Staff
+
+#### Vai trò
 
 * Nhân viên cung cấp dịch vụ
-* Quan hệ:
 
-  * Nhiều Staff phục vụ nhiều Service (many-to-many)
-  * Có nhiều Appointment
+#### Quan hệ
 
----
+* Many-to-many với Service
+* Có nhiều Appointment
 
-### 5.6 StaffService
+#### Ý nghĩa
 
-* Bảng trung gian (pivot table)
-* Dùng để liên kết:
-
-  * Staff ↔ Service
+Cho phép phân công nhân viên phù hợp với từng dịch vụ
 
 ---
 
-### 5.7 Appointment
+### 5.6 Model: StaffService 
 
-* Lịch đặt dịch vụ
-* Là bảng trung tâm của hệ thống
-* Quan hệ:
+#### Vai trò
 
-  * Thuộc về Customer
-  * Thuộc về Pet
-  * Thuộc về Staff
-  * Thuộc về Service
+* Bảng trung gian giữa:
 
----
+  * Staff và Service
 
-### 5.8 Invoice
+#### Ý nghĩa
 
-* Hóa đơn thanh toán
-* Quan hệ:
-
-  * 1 Appointment có 1 Invoice
+* Một nhân viên có thể làm nhiều dịch vụ
+* Một dịch vụ có nhiều nhân viên
 
 ---
 
-### 5.9 Payment
+### 5.7 Model: Appointment
 
-* Thông tin thanh toán
-* Quan hệ:
+#### Vai trò
 
-  * Gắn với Invoice
+* Quản lý lịch đặt dịch vụ
+
+#### Đây là MODEL QUAN TRỌNG NHẤT
+
+#### Quan hệ
+
+* belongsTo Customer
+* belongsTo Pet
+* belongsTo Service
+* belongsTo Staff
+* hasOne Invoice
+
+#### Chức năng
+
+* Tạo lịch hẹn
+* Quản lý trạng thái (pending, completed,...)
 
 ---
 
-### 5.10 Review
+### 5.8 Model: Invoice
+
+#### Vai trò
+
+* Hóa đơn cho mỗi lịch hẹn
+
+#### Quan hệ
+
+* belongsTo Appointment
+* hasOne Payment
+
+---
+
+### 5.9 Model: Payment
+
+#### Vai trò
+
+* Lưu thông tin thanh toán
+
+#### Quan hệ
+
+* belongsTo Invoice
+
+#### Chức năng
+
+* Ghi nhận trạng thái thanh toán
+* Phương thức thanh toán
+
+---
+
+### 5.10 Model: Review
+
+#### Vai trò
 
 * Đánh giá dịch vụ
-* Quan hệ:
 
-  * Customer đánh giá Service
+#### Quan hệ
 
----
+* belongsTo Customer
+* belongsTo Service
 
-## 6. Luồng hoạt động hệ thống
+#### Chức năng
 
-1. Người dùng đăng ký / đăng nhập
-2. Khách hàng thêm thú cưng
-3. Khách hàng chọn dịch vụ
-4. Đặt lịch (Appointment)
-5. Nhân viên xử lý dịch vụ
-6. Hệ thống tạo hóa đơn (Invoice)
-7. Thanh toán (Payment)
-8. Khách hàng đánh giá (Review)
+* Lưu rating và comment
 
 ---
 
-## 7. API chính
+## 6. LUỒNG HOẠT ĐỘNG HỆ THỐNG
 
-Các API được định nghĩa trong:
-
-```
-routes/api.php
-```
-
-Bao gồm:
-
-* Authentication API
-* Pet API
-* Service API
-* Appointment API
-
-Controller xử lý tại:
-
-```
-app/Http/Controllers/Api/
-```
+1. User đăng ký / đăng nhập
+2. Tạo Customer
+3. Thêm Pet
+4. Chọn Service
+5. Tạo Appointment
+6. Gán Staff
+7. Tạo Invoice
+8. Thanh toán (Payment)
+9. Đánh giá (Review)
 
 ---
 
-## 8. Cài đặt và chạy dự án
+## 7. API CONTROLLER
 
-### Bước 1: Clone project
+### AuthController
 
-```bash
-git clone <repository-url>
-cd pet-care-service
-```
+* Đăng ký
+* Đăng nhập
 
----
+### PetController
 
-### Bước 2: Cài đặt backend
+* CRUD Pet
 
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-```
+### ServiceController
 
----
+* Lấy danh sách dịch vụ
 
-### Bước 3: Cấu hình database
+### AppointmentController
 
-Sửa file `.env`:
-
-```
-DB_DATABASE=petcare
-DB_USERNAME=root
-DB_PASSWORD=
-```
+* Tạo lịch
+* Xem lịch
+* Cập nhật trạng thái
 
 ---
 
-### Bước 4: Migration database
+## 8. DATABASE
 
-```bash
-php artisan migrate
+* Sử dụng migrations trong:
+
+```
+database/migrations/
 ```
 
-Hoặc import file:
+* Hoặc import:
 
 ```
 database/schema.sql
@@ -266,7 +317,38 @@ database/schema.sql
 
 ---
 
-### Bước 5: Chạy backend
+## 9. CÀI ĐẶT
+
+### 1. Clone project
+
+```bash
+git clone <repo>
+cd pet-care-service
+```
+
+### 2. Cài đặt
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+### 3. Cấu hình database
+
+```
+DB_DATABASE=petcare
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### 4. Chạy migration
+
+```bash
+php artisan migrate
+```
+
+### 5. Chạy server
 
 ```bash
 php artisan serve
@@ -274,57 +356,12 @@ php artisan serve
 
 ---
 
-### Bước 6: Cài đặt frontend
+## 10. KẾT LUẬN
 
-```bash
-npm install
-npm run dev
-```
+Hệ thống đã xây dựng đầy đủ các thành phần:
 
----
+* Quản lý dữ liệu bằng Model
+* Xử lý logic bằng Controller
+* API rõ ràng, dễ mở rộng
 
-## 9. Chức năng chính
-
-### Quản lý khách hàng
-
-* Thêm, sửa, xóa
-* Xem thông tin
-
-### Quản lý thú cưng
-
-* Thêm thú cưng
-* Cập nhật thông tin
-
-### Quản lý dịch vụ
-
-* Danh sách dịch vụ
-* Giá dịch vụ
-
-### Đặt lịch
-
-* Tạo lịch hẹn
-* Phân công nhân viên
-
-### Thanh toán
-
-* Tạo hóa đơn
-* Xử lý thanh toán
-
-### Đánh giá
-
-* Khách hàng đánh giá dịch vụ
-
----
-
-## 10. Hướng phát triển
-
-* Thêm phân quyền chi tiết (Admin / Staff / Customer)
-* Tích hợp thanh toán online
-* Gửi email thông báo
-* Dashboard thống kê nâng cao
-
----
-
-## 11. Kết luận
-
-Dự án xây dựng hệ thống quản lý dịch vụ thú cưng đầy đủ chức năng cơ bản, áp dụng mô hình MVC và RESTful API, giúp dễ dàng mở rộng và phát triển trong tương lai.
+Đặc biệt, mô hình dữ liệu được thiết kế theo quan hệ chặt chẽ, giúp hệ thống dễ dàng mở rộng trong tương lai.
