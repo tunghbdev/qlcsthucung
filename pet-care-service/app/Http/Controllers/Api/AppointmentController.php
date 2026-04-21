@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Customer;
+use App\Models\Invoice;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -152,7 +153,28 @@ class AppointmentController extends Controller
             'notes' => 'nullable|string'
         ]);
 
+        $oldStatus = $appointment->status;
         $appointment->update($validated);
+
+        // Auto-create invoice when appointment is marked as completed
+        if ($validated['status'] === 'completed' && $oldStatus !== 'completed') {
+            $existingInvoice = Invoice::where('appointment_id', $appointment->id)->first();
+            
+            if (!$existingInvoice) {
+                $servicePrice = (int) $appointment->service->price;
+                
+                Invoice::create([
+                    'invoice_number' => 'INV-' . date('YmdHis') . '-' . $appointment->id,
+                    'customer_id' => $appointment->customer_id,
+                    'appointment_id' => $appointment->id,
+                    'subtotal' => $servicePrice,
+                    'discount_amount' => 0,
+                    'tax_amount' => 0,
+                    'total_amount' => $servicePrice,
+                    'status' => 'unpaid'
+                ]);
+            }
+        }
 
         return response()->json(['message' => 'Cập nhật lịch hẹn thành công']);
     }

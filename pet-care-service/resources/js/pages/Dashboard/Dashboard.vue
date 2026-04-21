@@ -150,11 +150,11 @@ export default {
       try {
         if (this.userRole === 'customer') {
           // Fetch customer's pets
-          const petsResponse = await api.get('/api/pets');
+          const petsResponse = await api.get('/pets');
           this.stats.totalPets = petsResponse.data.data.length;
 
           // Fetch customer's appointments
-          const appointmentsResponse = await api.get('/api/appointments');
+          const appointmentsResponse = await api.get('/appointments');
           const appointments = appointmentsResponse.data.data;
           const today = new Date();
           today.setHours(0, 0, 0, 0);
@@ -168,7 +168,7 @@ export default {
           this.stats.unpaidInvoices = appointments.filter(apt => apt.status === 'pending').length;
         } else if (this.userRole === 'staff') {
           // Fetch staff appointments
-          const appointmentsResponse = await api.get('/api/appointments');
+          const appointmentsResponse = await api.get('/appointments');
           const appointments = appointmentsResponse.data.data;
           const today = new Date();
           today.setHours(0, 0, 0, 0);

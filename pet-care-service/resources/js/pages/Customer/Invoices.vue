@@ -10,6 +10,18 @@
             <h4 class="mb-0">Hóa Đơn Của Tôi</h4>
           </div>
           <div class="card-body">
+            <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+              {{ error }}
+              <button type="button" class="btn-close" @click="error = null"></button>
+            </div>
+
+            <div v-if="loading" class="alert alert-info">
+              <div class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+              Đang xử lý...
+            </div>
+
             <div class="row mb-3">
               <div class="col-md-4">
                 <div class="card bg-light">
@@ -37,39 +49,39 @@
               </div>
             </div>
 
-            <table class="table table-hover">
+            <div v-if="invoices.length === 0" class="alert alert-info">
+              Bạn chưa có hóa đơn nào.
+            </div>
+            <table v-else class="table table-hover">
               <thead>
                 <tr>
                   <th>Mã HĐ</th>
                   <th>Dịch Vụ</th>
                   <th>Thú Cưng</th>
                   <th>Ngày</th>
-                  <th>Số Tiền</th>
+                  <th>Tổng Cộng</th>
                   <th>Trạng Thái</th>
                   <th>Hành Động</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="invoice in invoices" :key="invoice.id">
-                  <td>#{{ invoice.id }}</td>
-                  <td>{{ invoice.service }}</td>
-                  <td>{{ invoice.pet }}</td>
-                  <td>{{ invoice.date }}</td>
-                  <td>{{ formatCurrency(invoice.amount) }}</td>
+                  <td>{{ invoice.invoice_number }}</td>
+                  <td>{{ invoice.appointment?.service_name }}</td>
+                  <td>{{ invoice.appointment?.pet_name }}</td>
+                  <td>{{ invoice.created_at.split(' ')[0] }}</td>
+                  <td>{{ formatCurrency(invoice.total_amount) }}</td>
                   <td>
-                    <span :class="'badge bg-' + (invoice.paymentStatus === 'paid' ? 'success' : 'warning')">
-                      {{ invoice.paymentStatus === 'paid' ? 'Đã Thanh Toán' : 'Chưa Thanh Toán' }}
+                    <span :class="'badge bg-' + (invoice.status === 'paid' ? 'success' : 'warning')">
+                      {{ invoice.status === 'paid' ? 'Đã Thanh Toán' : 'Chưa Thanh Toán' }}
                     </span>
                   </td>
                   <td>
-                    <button @click="viewInvoice(invoice)" class="btn btn-sm btn-info me-2">
+                    <button @click="viewInvoice(invoice)" class="btn btn-sm btn-info me-2" :disabled="loading">
                       <i class="bi bi-eye"></i> Xem
                     </button>
-                    <button v-if="invoice.paymentStatus === 'pending'" @click="payInvoice(invoice)" class="btn btn-sm btn-success">
+                    <button v-if="invoice.status === 'unpaid'" @click="openPaymentModal(invoice)" class="btn btn-sm btn-success" :disabled="loading">
                       <i class="bi bi-cash-coin"></i> Thanh Toán
-                    </button>
-                    <button v-else @click="printInvoice(invoice)" class="btn btn-sm btn-secondary">
-                      <i class="bi bi-printer"></i> In
                     </button>
                   </td>
                 </tr>
@@ -79,11 +91,60 @@
         </div>
       </div>
     </div>
+
+    <!-- Payment Modal -->
+    <div v-if="showPaymentModal" class="modal d-block" style="background-color: rgba(0,0,0,0.5);">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Thanh Toán Hóa Đơn</h5>
+            <button type="button" class="btn-close" @click="showPaymentModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <div v-if="selectedInvoice" class="mb-3">
+              <p><strong>Mã HĐ:</strong> {{ selectedInvoice.invoice_number }}</p>
+              <p><strong>Tổng Cộng:</strong> {{ formatCurrency(selectedInvoice.total_amount) }}</p>
+              <p><strong>Đã Thanh Toán:</strong> {{ formatCurrency(selectedInvoice.paid_amount) }}</p>
+              <p><strong>Còn Lại:</strong> {{ formatCurrency(selectedInvoice.remaining_amount) }}</p>
+
+              <div class="mb-3">
+                <label for="paymentAmount" class="form-label">Số Tiền Thanh Toán</label>
+                <input 
+                  v-model.number="paymentForm.amount" 
+                  type="number" 
+                  class="form-control" 
+                  id="paymentAmount"
+                  :max="selectedInvoice.remaining_amount"
+                  step="0.01"
+                >
+              </div>
+
+              <div class="mb-3">
+                <label for="paymentMethod" class="form-label">Phương Thức Thanh Toán</label>
+                <select v-model="paymentForm.method" class="form-select" id="paymentMethod">
+                  <option value="">-- Chọn phương thức --</option>
+                  <option value="cash">Tiền Mặt</option>
+                  <option value="credit_card">Thẻ Tín Dụng</option>
+                  <option value="debit_card">Thẻ Ghi Nợ</option>
+                  <option value="bank_transfer">Chuyển Khoản</option>
+                  <option value="e_wallet">Ví Điện Tử</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showPaymentModal = false">Hủy</button>
+            <button type="button" class="btn btn-success" @click="makePayment" :disabled="loading">Thanh Toán</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import SidebarNav from '@/components/SidebarNav.vue';
+import api from '@/services/api';
 
 export default {
   name: 'CustomerInvoices',
@@ -93,50 +154,45 @@ export default {
   data() {
     return {
       userRole: 'customer',
-      invoices: [
-        {
-          id: 'INV001',
-          service: 'Tắm',
-          pet: 'Bess (Chó)',
-          date: '2024-04-19',
-          amount: 150000,
-          paymentStatus: 'paid'
-        },
-        {
-          id: 'INV002',
-          service: 'Cắt Tỉa Lông',
-          pet: 'Miu (Mèo)',
-          date: '2024-04-20',
-          amount: 200000,
-          paymentStatus: 'pending'
-        },
-        {
-          id: 'INV003',
-          service: 'Tiêm Phòng',
-          pet: 'Bess (Chó)',
-          date: '2024-04-18',
-          amount: 300000,
-          paymentStatus: 'paid'
-        },
-      ]
+      loading: false,
+      error: null,
+      invoices: [],
+      showPaymentModal: false,
+      selectedInvoice: null,
+      paymentForm: {
+        amount: 0,
+        method: ''
+      }
     };
   },
   computed: {
     totalSpent() {
-      return this.invoices.reduce((sum, inv) => sum + inv.amount, 0);
+      return this.invoices.reduce((sum, inv) => sum + inv.total_amount, 0);
     },
     paidAmount() {
-      return this.invoices
-        .filter(inv => inv.paymentStatus === 'paid')
-        .reduce((sum, inv) => sum + inv.amount, 0);
+      return this.invoices.reduce((sum, inv) => sum + inv.paid_amount, 0);
     },
     pendingAmount() {
-      return this.invoices
-        .filter(inv => inv.paymentStatus === 'pending')
-        .reduce((sum, inv) => sum + inv.amount, 0);
+      return this.invoices.reduce((sum, inv) => sum + inv.remaining_amount, 0);
     }
   },
+  mounted() {
+    this.fetchInvoices();
+  },
   methods: {
+    async fetchInvoices() {
+      try {
+        this.loading = true;
+        this.error = null;
+        const response = await api.get('/invoices');
+        this.invoices = response.data.data || [];
+      } catch (error) {
+        this.error = 'Lỗi khi tải hóa đơn: ' + (error.response?.data?.message || error.message);
+        console.error('Error fetching invoices:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
     formatCurrency(value) {
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -144,16 +200,41 @@ export default {
       }).format(value);
     },
     viewInvoice(invoice) {
-      alert('Chi tiết hóa đơn: ' + invoice.id);
+      alert('Chi tiết hóa đơn: ' + invoice.invoice_number + '\n(Chi tiết đầy đủ sẽ được hiển thị trong modal)');
     },
-    payInvoice(invoice) {
-      if (confirm('Thanh toán hóa đơn ' + invoice.id + ' - ' + this.formatCurrency(invoice.amount) + '?')) {
-        invoice.paymentStatus = 'paid';
-        alert('Thanh toán thành công!');
+    openPaymentModal(invoice) {
+      this.selectedInvoice = invoice;
+      this.paymentForm.amount = invoice.remaining_amount;
+      this.paymentForm.method = '';
+      this.showPaymentModal = true;
+    },
+    async makePayment() {
+      if (!this.paymentForm.amount || !this.paymentForm.method) {
+        this.error = 'Vui lòng điền đầy đủ thông tin';
+        return;
       }
-    },
-    printInvoice(invoice) {
-      alert('In hóa đơn: ' + invoice.id);
+
+      try {
+        this.loading = true;
+        this.error = null;
+        
+        await api.post('/payments', {
+          invoice_id: this.selectedInvoice.id,
+          amount: this.paymentForm.amount,
+          payment_method: this.paymentForm.method
+        });
+
+        alert('Thanh toán thành công!');
+        this.showPaymentModal = false;
+        this.selectedInvoice = null;
+        this.paymentForm = { amount: 0, method: '' };
+        await this.fetchInvoices();
+      } catch (error) {
+        this.error = 'Lỗi khi thanh toán: ' + (error.response?.data?.message || error.message);
+        console.error('Error making payment:', error);
+      } finally {
+        this.loading = false;
+      }
     }
   }
 };

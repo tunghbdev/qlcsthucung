@@ -1,78 +1,184 @@
 <template>
-  <div class="container-fluid mt-5">
-    <div class="row">
-      <div class="col-md-3">
-        <SidebarNav :userRole="userRole" />
+  <div class="container-fluid py-4">
+    <SidebarNav />
+
+    <div class="main-content">
+      <div class="page-header mb-4">
+        <h2 class="mb-0">
+          <i class="bi bi-calendar-event"></i> Quản Lý Lịch Hẹn
+        </h2>
       </div>
-      <div class="col-md-9">
-        <div class="card">
-          <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Quản Lý Lịch Hẹn</h4>
+
+      <div class="card">
+        <div class="card-body">
+          <!-- Error Alert -->
+          <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" @click="error = null"></button>
           </div>
-          <div class="card-body">
-            <div class="row mb-3">
-              <div class="col-md-4">
-                <input 
-                  v-model="filters.search" 
-                  type="text" 
-                  class="form-control" 
-                  placeholder="Tìm kiếm khách hàng hoặc thú cưng"
-                >
-              </div>
-              <div class="col-md-4">
-                <select v-model="filters.status" class="form-select">
-                  <option value="">Tất Cả Trạng Thái</option>
+
+          <!-- Loading -->
+          <div v-if="loading" class="alert alert-info">
+            <div class="spinner-border spinner-border-sm" role="status">
+              <span class="visually-hidden">Đang tải...</span>
+            </div>
+            Đang tải...
+          </div>
+
+          <!-- Filters -->
+          <div v-else class="row mb-3 g-3">
+            <div class="col-md-4">
+              <input 
+                v-model="filters.search" 
+                type="text" 
+                class="form-control" 
+                placeholder="Tìm kiếm khách hàng hoặc thú cưng"
+              >
+            </div>
+            <div class="col-md-4">
+              <select v-model="filters.status" class="form-select">
+                <option value="">Tất Cả Trạng Thái</option>
+                <option value="pending">Chờ Xử Lý</option>
+                <option value="confirmed">Đã Xác Nhận</option>
+                <option value="processing">Đang Thực Hiện</option>
+                <option value="completed">Đã Hoàn Thành</option>
+                <option value="cancelled">Hủy</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <button @click="fetchAppointments" class="btn btn-primary w-100">
+                <i class="bi bi-arrow-clockwise"></i> Làm Tươi
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div v-if="!loading && filteredAppointments.length === 0" class="alert alert-info text-center py-5">
+            <i class="bi bi-inbox display-4"></i>
+            <p class="mt-3">Không có lịch hẹn nào.</p>
+          </div>
+
+          <!-- Table -->
+          <table v-else class="table table-hover table-striped">
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Khách Hàng</th>
+                <th>Thú Cưng</th>
+                <th>Dịch Vụ</th>
+                <th>Ngày Giờ</th>
+                <th>Trạng Thái</th>
+                <th>Ghi Chú</th>
+                <th>Hành Động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="apt in filteredAppointments" :key="apt.id">
+                <td><strong>#{{ apt.id }}</strong></td>
+                <td>{{ apt.customer.user.name }}</td>
+                <td>
+                  <i class="bi bi-paw"></i> {{ apt.pet.name }}
+                </td>
+                <td>{{ apt.service.name }}</td>
+                <td>
+                  {{ formatDate(apt.appointment_date) }}
+                  <br>
+                  <small class="text-muted">{{ apt.appointment_time }}</small>
+                </td>
+                <td>
+                  <span :class="'badge bg-' + getStatusColor(apt.status)">
+                    {{ getStatusLabel(apt.status) }}
+                  </span>
+                </td>
+                <td>
+                  <small v-if="apt.notes">{{ apt.notes.substring(0, 30) }}...</small>
+                  <small v-else class="text-muted">—</small>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button 
+                      @click="showStatusModal(apt)"
+                      class="btn btn-outline-primary"
+                      :disabled="loading"
+                      title="Cập nhật trạng thái"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                      v-if="apt.status !== 'completed' && apt.status !== 'cancelled'"
+                      @click="markAsCompleted(apt)"
+                      class="btn btn-outline-success"
+                      :disabled="loading"
+                      title="Hoàn thành (tạo hóa đơn)"
+                    >
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                    <button 
+                      v-if="apt.status !== 'cancelled'"
+                      @click="cancelAppointment(apt.id)"
+                      class="btn btn-outline-danger"
+                      :disabled="loading"
+                      title="Hủy lịch hẹn"
+                    >
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Status Update Modal -->
+      <div v-if="selectedAppointment && showUpdateModal" class="modal d-block" :style="{ backgroundColor: 'rgba(0,0,0,0.5)' }">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Cập Nhật Trạng Thái Lịch Hẹn</h5>
+              <button type="button" class="btn-close" @click="closeModals()"></button>
+            </div>
+            <div class="modal-body">
+              <p>
+                <strong>Thú Cưng:</strong> {{ selectedAppointment.pet.name }}<br>
+                <strong>Dịch Vụ:</strong> {{ selectedAppointment.service.name }}<br>
+                <strong>Trạng Thái Hiện Tại:</strong> 
+                <span :class="'badge bg-' + getStatusColor(selectedAppointment.status)">
+                  {{ getStatusLabel(selectedAppointment.status) }}
+                </span>
+              </p>
+              <div class="mb-3">
+                <label class="form-label">Trạng Thái Mới:</label>
+                <select v-model="statusUpdateForm.status" class="form-select">
                   <option value="pending">Chờ Xử Lý</option>
+                  <option value="confirmed">Đã Xác Nhận</option>
                   <option value="processing">Đang Thực Hiện</option>
                   <option value="completed">Đã Hoàn Thành</option>
                   <option value="cancelled">Hủy</option>
                 </select>
               </div>
-              <div class="col-md-4">
-                <button @click="exportAppointments" class="btn btn-success w-100">
-                  <i class="bi bi-download"></i> Xuất Excel
-                </button>
+              <div class="mb-3">
+                <label class="form-label">Ghi Chú:</label>
+                <textarea 
+                  v-model="statusUpdateForm.notes" 
+                  class="form-control" 
+                  rows="3"
+                  placeholder="Thêm ghi chú..."
+                ></textarea>
               </div>
             </div>
-
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Khách Hàng</th>
-                  <th>Thú Cưng</th>
-                  <th>Dịch Vụ</th>
-                  <th>Ngày Giờ</th>
-                  <th>Trạng Thái</th>
-                  <th>Nhân Viên</th>
-                  <th>Hành Động</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="apt in filteredAppointments" :key="apt.id">
-                  <td>#{{ apt.id }}</td>
-                  <td>{{ apt.customer }}</td>
-                  <td>{{ apt.pet }}</td>
-                  <td>{{ apt.service }}</td>
-                  <td>{{ apt.dateTime }}</td>
-                  <td>
-                    <span :class="'badge bg-' + getStatusColor(apt.status)">{{ getStatusLabel(apt.status) }}</span>
-                  </td>
-                  <td>{{ apt.staff }}</td>
-                  <td>
-                    <button @click="viewAppointment(apt)" class="btn btn-sm btn-info me-2">
-                      <i class="bi bi-eye"></i>
-                    </button>
-                    <button @click="editAppointmentStatus(apt)" class="btn btn-sm btn-warning me-2">
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button @click="deleteAppointment(apt.id)" class="btn btn-sm btn-danger">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="closeModals()">Hủy</button>
+              <button 
+                type="button" 
+                class="btn btn-primary" 
+                @click="updateAppointmentStatus()"
+                :disabled="loading"
+              >
+                <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                Cập Nhật
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -82,6 +188,7 @@
 
 <script>
 import SidebarNav from '@/components/SidebarNav.vue';
+import api from '@/services/api';
 
 export default {
   name: 'AdminAppointments',
@@ -90,108 +197,180 @@ export default {
   },
   data() {
     return {
-      userRole: 'admin',
+      loading: false,
+      error: null,
+      appointments: [],
       filters: {
         search: '',
         status: ''
       },
-      appointments: [
-        {
-          id: 1,
-          customer: 'Nguyễn Văn A',
-          pet: 'Bess (Chó)',
-          service: 'Tắm',
-          dateTime: '2024-04-20 09:00',
-          status: 'completed',
-          staff: 'Nhân viên 1'
-        },
-        {
-          id: 2,
-          customer: 'Trần Thị B',
-          pet: 'Miu (Mèo)',
-          service: 'Cắt tỉa lông',
-          dateTime: '2024-04-20 10:30',
-          status: 'processing',
-          staff: 'Nhân viên 2'
-        },
-        {
-          id: 3,
-          customer: 'Phạm Văn C',
-          pet: 'Puppy (Chó)',
-          service: 'Tiêm phòng',
-          dateTime: '2024-04-20 14:00',
-          status: 'pending',
-          staff: 'Nhân viên 3'
-        },
-        {
-          id: 4,
-          customer: 'Võ Thị D',
-          pet: 'Leo (Chó)',
-          service: 'Huấn luyện',
-          dateTime: '2024-04-21 15:00',
-          status: 'pending',
-          staff: 'Chưa gán'
-        },
-      ]
+      selectedAppointment: null,
+      showUpdateModal: false,
+      statusUpdateForm: {
+        status: '',
+        notes: ''
+      }
     };
   },
   computed: {
     filteredAppointments() {
       return this.appointments.filter(apt => {
-        const matchSearch = apt.customer.toLowerCase().includes(this.filters.search.toLowerCase()) ||
-                          apt.pet.toLowerCase().includes(this.filters.search.toLowerCase());
+        const matchSearch = 
+          apt.customer.user.name.toLowerCase().includes(this.filters.search.toLowerCase()) ||
+          apt.pet.name.toLowerCase().includes(this.filters.search.toLowerCase());
         const matchStatus = !this.filters.status || apt.status === this.filters.status;
         return matchSearch && matchStatus;
       });
     }
   },
+  mounted() {
+    this.fetchAppointments();
+  },
   methods: {
+    async fetchAppointments() {
+      try {
+        this.loading = true;
+        this.error = null;
+        const response = await api.get('/appointments');
+        this.appointments = response.data.data;
+      } catch (error) {
+        this.error = 'Lỗi khi tải lịch hẹn: ' + (error.response?.data?.message || error.message);
+        console.error('Error fetching appointments:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    showStatusModal(apt) {
+      this.selectedAppointment = apt;
+      this.statusUpdateForm = {
+        status: apt.status,
+        notes: apt.notes || ''
+      };
+      this.showUpdateModal = true;
+    },
+
+    closeModals() {
+      this.showUpdateModal = false;
+      this.selectedAppointment = null;
+      this.statusUpdateForm = {
+        status: '',
+        notes: ''
+      };
+    },
+
+    async updateAppointmentStatus() {
+      if (!this.selectedAppointment) return;
+
+      try {
+        this.loading = true;
+        await api.put(`/appointments/${this.selectedAppointment.id}`, {
+          status: this.statusUpdateForm.status,
+          notes: this.statusUpdateForm.notes
+        });
+
+        // Show message based on action
+        if (this.statusUpdateForm.status === 'completed') {
+          alert('Lịch hẹn đã hoàn thành! Hóa đơn sẽ được tạo tự động.');
+        } else {
+          alert('Cập nhật trạng thái thành công!');
+        }
+
+        this.closeModals();
+        this.fetchAppointments();
+      } catch (error) {
+        this.error = 'Lỗi khi cập nhật: ' + (error.response?.data?.message || error.message);
+        console.error('Error updating appointment:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async markAsCompleted(apt) {
+      if (!confirm('Bạn chắc chắn muốn hoàn thành lịch hẹn này? Hóa đơn sẽ được tạo tự động.')) return;
+
+      try {
+        this.loading = true;
+        await api.put(`/appointments/${apt.id}`, {
+          status: 'completed'
+        });
+        
+        alert('Lịch hẹn đã hoàn thành! Hóa đơn đã được tạo tự động.');
+        this.fetchAppointments();
+      } catch (error) {
+        this.error = 'Lỗi: ' + (error.response?.data?.message || error.message);
+        console.error('Error:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async cancelAppointment(id) {
+      if (!confirm('Bạn chắc chắn muốn hủy lịch hẹn này?')) return;
+
+      try {
+        this.loading = true;
+        await api.delete(`/appointments/${id}`);
+        
+        alert('Lịch hẹn đã được hủy.');
+        this.fetchAppointments();
+      } catch (error) {
+        this.error = 'Lỗi: ' + (error.response?.data?.message || error.message);
+        console.error('Error:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    formatDate(date) {
+      return new Date(date).toLocaleDateString('vi-VN');
+    },
+
     getStatusColor(status) {
       const colors = {
         completed: 'success',
         processing: 'info',
         pending: 'warning',
+        confirmed: 'success',
         cancelled: 'danger'
       };
       return colors[status] || 'secondary';
     },
+
     getStatusLabel(status) {
       const labels = {
         completed: 'Đã Hoàn Thành',
         processing: 'Đang Thực Hiện',
         pending: 'Chờ Xử Lý',
+        confirmed: 'Đã Xác Nhận',
         cancelled: 'Hủy'
       };
       return labels[status] || status;
-    },
-    viewAppointment(apt) {
-      alert('Chi tiết lịch hẹn #' + apt.id);
-    },
-    editAppointmentStatus(apt) {
-      alert('Cập nhật trạng thái lịch hẹn #' + apt.id);
-    },
-    deleteAppointment(id) {
-      if (confirm('Bạn có chắc chắn muốn xóa lịch hẹn này?')) {
-        this.appointments = this.appointments.filter(a => a.id !== id);
-      }
-    },
-    exportAppointments() {
-      alert('Xuất danh sách lịch hẹn thành file Excel');
     }
   }
 };
 </script>
 
 <style scoped>
-.table {
-  background-color: white;
+.btn-group-sm > .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
 }
 
-.btn-sm {
-  padding: 5px 10px;
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1050;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  outline: 0;
 }
 
-.badge {
-  padding: 5px 10px;
+.modal-dialog-centered {
+  display: flex;
+  align-items: center;
+  min-height: calc(100% - 1rem);
 }
 </style>

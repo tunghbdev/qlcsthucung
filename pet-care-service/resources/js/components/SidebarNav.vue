@@ -43,6 +43,11 @@
               </router-link>
             </li>
             <li class="nav-item">
+              <router-link to="/admin/service-requests" class="nav-link">
+                <i class="bi bi-clipboard-check"></i> Duyệt Yêu Cầu
+              </router-link>
+            </li>
+            <li class="nav-item">
               <router-link to="/admin/services" class="nav-link">
                 <i class="bi bi-briefcase"></i> Dịch Vụ
               </router-link>
@@ -77,6 +82,11 @@
             <li class="nav-item">
               <router-link to="/customer/appointments" class="nav-link">
                 <i class="bi bi-calendar-event"></i> Đặt Lịch
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link to="/customer/service-requests" class="nav-link">
+                <i class="bi bi-clipboard-check"></i> Yêu Cầu Dịch Vụ
               </router-link>
             </li>
             <li class="nav-item">

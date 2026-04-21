@@ -89,7 +89,7 @@ class PetController extends Controller
                 'color' => $pet->color,
                 'description' => $pet->description,
                 'health_notes' => $pet->health_notes,
-                'last_checkup' => $pet->last_checkup?->format('Y-m-d')
+                'last_checkup' => $pet->last_checkup
             ],
             'message' => 'Thêm thú cưng thành công'
         ], 201);
@@ -139,7 +139,7 @@ class PetController extends Controller
                 'color' => $pet->color,
                 'description' => $pet->description,
                 'health_notes' => $pet->health_notes,
-                'last_checkup' => $pet->last_checkup?->format('Y-m-d')
+                'last_checkup' => $pet->last_checkup
             ],
             'message' => 'Cập nhật thú cưng thành công'
         ]);

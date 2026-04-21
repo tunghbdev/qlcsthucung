@@ -10,13 +10,25 @@
             <h4 class="mb-0">Dashboard Quản Trị</h4>
           </div>
           <div class="card-body">
+            <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+              {{ error }}
+              <button type="button" class="btn-close" @click="error = null"></button>
+            </div>
+
+            <div v-if="loading" class="alert alert-info">
+              <div class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+              Đang xử lý...
+            </div>
+
             <div class="row mb-4">
               <div class="col-md-3">
                 <div class="card bg-light">
                   <div class="card-body text-center">
                     <i class="bi bi-people display-4 text-primary"></i>
                     <h5 class="card-title mt-2">Tổng Khách Hàng</h5>
-                    <h2 class="text-primary">250</h2>
+                    <h2 class="text-primary">{{ stats.totalCustomers }}</h2>
                   </div>
                 </div>
               </div>
@@ -25,7 +37,7 @@
                   <div class="card-body text-center">
                     <i class="bi bi-wallet-fill display-4 text-success"></i>
                     <h5 class="card-title mt-2">Tổng Doanh Thu</h5>
-                    <h2 class="text-success">{{ formatCurrency(totalRevenue) }}</h2>
+                    <h2 class="text-success">{{ formatCurrency(stats.totalRevenue) }}</h2>
                   </div>
                 </div>
               </div>
@@ -34,16 +46,16 @@
                   <div class="card-body text-center">
                     <i class="bi bi-calendar2-event display-4 text-warning"></i>
                     <h5 class="card-title mt-2">Lịch Hôm Nay</h5>
-                    <h2 class="text-warning">15</h2>
+                    <h2 class="text-warning">{{ stats.todayAppointments }}</h2>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="card bg-light">
                   <div class="card-body text-center">
-                    <i class="bi bi-person-badge display-4 text-info"></i>
-                    <h5 class="card-title mt-2">Nhân Viên</h5>
-                    <h2 class="text-info">12</h2>
+                    <i class="bi bi-check-circle display-4 text-info"></i>
+                    <h5 class="card-title mt-2">Hoàn Thành</h5>
+                    <h2 class="text-info">{{ stats.completedAppointments }}</h2>
                   </div>
                 </div>
               </div>
@@ -53,10 +65,13 @@
               <div class="col-md-6">
                 <div class="card">
                   <div class="card-header">
-                    <h5 class="mb-0">Lịch Hẹn Gần Đây</h5>
+                    <h5 class="mb-0">Lịch Hẹn Sắp Tới (7 Ngày)</h5>
                   </div>
                   <div class="card-body">
-                    <table class="table table-sm">
+                    <div v-if="stats.upcomingAppointments.length === 0" class="alert alert-info">
+                      Không có lịch hẹn sắp tới
+                    </div>
+                    <table v-else class="table table-sm">
                       <thead>
                         <tr>
                           <th>Khách Hàng</th>
@@ -66,12 +81,12 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="apt in recentAppointments" :key="apt.id">
-                          <td>{{ apt.customer }}</td>
-                          <td>{{ apt.service }}</td>
-                          <td>{{ apt.time }}</td>
+                        <tr v-for="apt in stats.upcomingAppointments" :key="apt.id">
+                          <td>{{ apt.customer_name }}</td>
+                          <td>{{ apt.service_name }}</td>
+                          <td>{{ apt.scheduled_at.split(' ')[1] }}</td>
                           <td>
-                            <span :class="'badge bg-' + getStatusColor(apt.status)">{{ apt.status }}</span>
+                            <span :class="'badge bg-' + getStatusColor(apt.status)">{{ getStatusLabel(apt.status) }}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -83,17 +98,54 @@
               <div class="col-md-6">
                 <div class="card">
                   <div class="card-header">
-                    <h5 class="mb-0">Dịch Vụ Bán Chạy Nhất</h5>
+                    <h5 class="mb-0">Hóa Đơn Gần Đây</h5>
                   </div>
                   <div class="card-body">
-                    <div v-for="service in topServices" :key="service.id" class="mb-3 pb-3 border-bottom">
-                      <div class="d-flex justify-content-between">
-                        <strong>{{ service.name }}</strong>
-                        <span class="badge bg-primary">{{ service.count }} đơn</span>
+                    <div v-if="stats.recentInvoices.length === 0" class="alert alert-info">
+                      Không có hóa đơn gần đây
+                    </div>
+                    <div v-else>
+                      <div v-for="invoice in stats.recentInvoices" :key="invoice.id" class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between">
+                          <strong>{{ invoice.invoice_number }}</strong>
+                          <span :class="'badge bg-' + (invoice.status === 'paid' ? 'success' : 'warning')">
+                            {{ invoice.status === 'paid' ? 'Đã Thanh Toán' : 'Chưa Thanh Toán' }}
+                          </span>
+                        </div>
+                        <small class="text-muted">{{ invoice.customer_name }}</small>
+                        <div class="mt-2">
+                          <small>{{ formatCurrency(invoice.total_amount) }}</small>
+                        </div>
                       </div>
-                      <div class="progress mt-2">
-                        <div class="progress-bar" :style="{width: (service.count / 20 * 100) + '%'}"></div>
-                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="card bg-light">
+                    <div class="card-body text-center">
+                      <h6>Tổng Lịch Hẹn</h6>
+                      <h3 class="text-primary">{{ stats.totalAppointments }}</h3>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card bg-light">
+                    <div class="card-body text-center">
+                      <h6>Đã Thanh Toán</h6>
+                      <h3 class="text-success">{{ formatCurrency(stats.paidRevenue) }}</h3>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card bg-light">
+                    <div class="card-body text-center">
+                      <h6>Chưa Thanh Toán</h6>
+                      <h3 class="text-warning">{{ formatCurrency(stats.pendingRevenue) }}</h3>
                     </div>
                   </div>
                 </div>
@@ -110,8 +162,8 @@
               <router-link to="/admin/staffs" class="btn btn-info me-2">
                 <i class="bi bi-people"></i> Quản Lý Nhân Viên
               </router-link>
-              <router-link to="/admin/reports" class="btn btn-warning">
-                <i class="bi bi-bar-chart"></i> Báo Cáo
+              <router-link to="/admin/invoices" class="btn btn-warning">
+                <i class="bi bi-receipt"></i> Quản Lý Hóa Đơn
               </router-link>
             </div>
           </div>
@@ -123,6 +175,7 @@
 
 <script>
 import SidebarNav from '@/components/SidebarNav.vue';
+import api from '@/services/api';
 
 export default {
   name: 'AdminDashboard',
@@ -132,22 +185,38 @@ export default {
   data() {
     return {
       userRole: 'admin',
-      totalRevenue: 125000000,
-      recentAppointments: [
-        { id: 1, customer: 'Nguyễn Văn A', service: 'Tắm', time: '09:00', status: 'Đã Hoàn Thành' },
-        { id: 2, customer: 'Trần Thị B', service: 'Cắt tỉa lông', time: '10:30', status: 'Đang Thực Hiện' },
-        { id: 3, customer: 'Phạm Văn C', service: 'Tiêm phòng', time: '14:00', status: 'Chờ Xử Lý' },
-        { id: 4, customer: 'Võ Thị D', service: 'Huấn luyện', time: '16:00', status: 'Chờ Xử Lý' },
-      ],
-      topServices: [
-        { id: 1, name: 'Tắm', count: 18 },
-        { id: 2, name: 'Cắt tỉa lông', count: 16 },
-        { id: 3, name: 'Tiêm phòng', count: 12 },
-        { id: 4, name: 'Huấn luyện', count: 8 },
-      ]
+      loading: false,
+      error: null,
+      stats: {
+        totalCustomers: 0,
+        totalAppointments: 0,
+        completedAppointments: 0,
+        totalRevenue: 0,
+        paidRevenue: 0,
+        pendingRevenue: 0,
+        todayAppointments: 0,
+        upcomingAppointments: [],
+        recentInvoices: []
+      }
     };
   },
+  mounted() {
+    this.fetchStats();
+  },
   methods: {
+    async fetchStats() {
+      try {
+        this.loading = true;
+        this.error = null;
+        const response = await api.get('/dashboard/stats');
+        this.stats = response.data.data;
+      } catch (error) {
+        this.error = 'Lỗi khi tải dữ liệu: ' + (error.response?.data?.message || error.message);
+        console.error('Error fetching stats:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
     formatCurrency(value) {
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -156,12 +225,23 @@ export default {
     },
     getStatusColor(status) {
       const colors = {
-        'Đã Hoàn Thành': 'success',
-        'Đang Thực Hiện': 'info',
-        'Chờ Xử Lý': 'warning',
-        'Hủy': 'danger'
+        completed: 'success',
+        processing: 'info',
+        pending: 'warning',
+        confirmed: 'success',
+        cancelled: 'danger'
       };
       return colors[status] || 'secondary';
+    },
+    getStatusLabel(status) {
+      const labels = {
+        completed: 'Đã Hoàn Thành',
+        processing: 'Đang Thực Hiện',
+        pending: 'Chờ Xử Lý',
+        confirmed: 'Đã Xác Nhận',
+        cancelled: 'Hủy'
+      };
+      return labels[status] || status;
     }
   }
 };

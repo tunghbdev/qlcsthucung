@@ -15,12 +15,14 @@ import AdminInvoices from './pages/Admin/Invoices.vue';
 import AdminStaffs from './pages/Admin/Staffs.vue';
 import AdminCustomers from './pages/Admin/Customers.vue';
 import AdminReports from './pages/Admin/Reports.vue';
+import AdminServiceRequests from './pages/Admin/ServiceRequests.vue';
 
 // Customer pages
 import CustomerAppointments from './pages/Customer/Appointments.vue';
 import CustomerPets from './pages/Customer/Pets.vue';
 import CustomerInvoices from './pages/Customer/Invoices.vue';
 import CustomerProfile from './pages/Customer/Profile.vue';
+import CustomerServiceRequests from './pages/Customer/ServiceRequests.vue';
 
 // Staff pages
 import StaffAppointments from './pages/Staff/Appointments.vue';
@@ -91,6 +93,12 @@ const routes = [
     component: AdminReports,
     meta: { requiresAuth: true, role: 'admin' }
   },
+  {
+    path: '/admin/service-requests',
+    name: 'AdminServiceRequests',
+    component: AdminServiceRequests,
+    meta: { requiresAuth: true, role: 'admin' }
+  },
   // Customer routes
   {
     path: '/customer/appointments',
@@ -114,6 +122,12 @@ const routes = [
     path: '/customer/profile',
     name: 'CustomerProfile',
     component: CustomerProfile,
+    meta: { requiresAuth: true, role: 'customer' }
+  },
+  {
+    path: '/customer/service-requests',
+    name: 'CustomerServiceRequests',
+    component: CustomerServiceRequests,
     meta: { requiresAuth: true, role: 'customer' }
   },
   // Staff routes

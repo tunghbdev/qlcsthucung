@@ -235,7 +235,7 @@ export default {
         this.loading = true;
         this.error = null;
         
-        await api.delete(`/api/appointments/${id}`);
+        await api.delete(`/appointments/${id}`);
         this.myAppointments = this.myAppointments.filter(apt => apt.id !== id);
         alert('Lịch hẹn đã được hủy!');
       } catch (error) {
