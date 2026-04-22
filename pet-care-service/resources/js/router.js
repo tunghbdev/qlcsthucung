@@ -25,6 +25,7 @@ import CustomerProfile from './pages/Customer/Profile.vue';
 import CustomerServiceRequests from './pages/Customer/ServiceRequests.vue';
 
 // Staff pages
+import StaffDashboard from './pages/Staff/Dashboard.vue';
 import StaffAppointments from './pages/Staff/Appointments.vue';
 import StaffProfile from './pages/Staff/Profile.vue';
 
@@ -131,6 +132,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'customer' }
   },
   // Staff routes
+  {
+    path: '/staff',
+    name: 'StaffDashboard',
+    component: StaffDashboard,
+    meta: { requiresAuth: true, role: 'staff' }
+  },
   {
     path: '/staff/appointments',
     name: 'StaffAppointments',

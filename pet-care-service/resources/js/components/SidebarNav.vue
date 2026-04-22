@@ -112,6 +112,11 @@
               <span class="text-muted small">CÔNG VIỆC</span>
             </li>
             <li class="nav-item">
+              <router-link to="/staff" class="nav-link">
+                <i class="bi bi-speedometer2"></i> Dashboard
+              </router-link>
+            </li>
+            <li class="nav-item">
               <router-link to="/staff/appointments" class="nav-link">
                 <i class="bi bi-calendar-event"></i> Lịch Của Tôi
               </router-link>
