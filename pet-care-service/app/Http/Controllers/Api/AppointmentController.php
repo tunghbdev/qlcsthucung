@@ -26,6 +26,10 @@ class AppointmentController extends Controller
         if ($user->role === 'customer') {
             $customer = $user->customer;
             $appointments = $appointments->where('customer_id', $customer->id);
+        } elseif ($user->role === 'staff') {
+            // Staff only sees their own appointments
+            $staff = $user->staff;
+            $appointments = $appointments->where('staff_id', $staff->id);
         }
 
         $appointments = $appointments->with('service', 'pet', 'staff', 'customer')
@@ -44,6 +48,12 @@ class AppointmentController extends Controller
                         'id' => $apt->service->id,
                         'name' => $apt->service->name,
                         'price' => (int) $apt->service->price
+                    ],
+                    'customer' => [
+                        'id' => $apt->customer->id,
+                        'name' => $apt->customer->user->name,
+                        'email' => $apt->customer->user->email,
+                        'phone' => $apt->customer->user->phone ?? ''
                     ],
                     'staff_name' => $apt->staff ? $apt->staff->user->name : 'Chưa gán',
                     'appointment_date' => $scheduledAt->format('Y-m-d'),
