@@ -1,15 +1,17 @@
 <template>
-  <div class="container-fluid mt-5">
-    <div class="row">
-      <div class="col-md-3">
-        <SidebarNav :userRole="userRole" />
+  <div class="container-fluid py-4">
+    <SidebarNav />
+
+    <div class="main-content">
+      <div class="page-header mb-4">
+        <h2 class="mb-0">
+          <i class="bi bi-speedometer2"></i> Dashboard Quản Trị
+        </h2>
+        <small class="text-muted">Tổng quan thông tin kinh doanh và hoạt động dịch vụ</small>
       </div>
-      <div class="col-md-9">
-        <div class="card">
-          <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Dashboard Quản Trị</h4>
-          </div>
-          <div class="card-body">
+
+      <div class="card">
+        <div class="card-body">
             <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert">
               {{ error }}
               <button type="button" class="btn-close" @click="error = null"></button>
@@ -22,41 +24,33 @@
               Đang xử lý...
             </div>
 
-            <div class="row mb-4">
+            <div class="row mb-4 g-3">
               <div class="col-md-3">
-                <div class="card bg-light">
-                  <div class="card-body text-center">
-                    <i class="bi bi-people display-4 text-primary"></i>
-                    <h5 class="card-title mt-2">Tổng Khách Hàng</h5>
-                    <h2 class="text-primary">{{ stats.totalCustomers }}</h2>
-                  </div>
+                <div class="stat-card">
+                  <i class="bi bi-people display-4 text-primary"></i>
+                  <h6>Tổng Khách Hàng</h6>
+                  <h3 class="text-primary">{{ stats.totalCustomers }}</h3>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="card bg-light">
-                  <div class="card-body text-center">
-                    <i class="bi bi-wallet-fill display-4 text-success"></i>
-                    <h5 class="card-title mt-2">Tổng Doanh Thu</h5>
-                    <h2 class="text-success">{{ formatCurrency(stats.totalRevenue) }}</h2>
-                  </div>
+                <div class="stat-card">
+                  <i class="bi bi-wallet-fill display-4 text-success"></i>
+                  <h6>Tổng Doanh Thu</h6>
+                  <h3 class="text-success">{{ formatCurrency(stats.totalRevenue) }}</h3>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="card bg-light">
-                  <div class="card-body text-center">
-                    <i class="bi bi-calendar2-event display-4 text-warning"></i>
-                    <h5 class="card-title mt-2">Lịch Hôm Nay</h5>
-                    <h2 class="text-warning">{{ stats.todayAppointments }}</h2>
-                  </div>
+                <div class="stat-card">
+                  <i class="bi bi-calendar2-event display-4 text-warning"></i>
+                  <h6>Lịch Hôm Nay</h6>
+                  <h3 class="text-warning">{{ stats.todayAppointments }}</h3>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="card bg-light">
-                  <div class="card-body text-center">
-                    <i class="bi bi-check-circle display-4 text-info"></i>
-                    <h5 class="card-title mt-2">Hoàn Thành</h5>
-                    <h2 class="text-info">{{ stats.completedAppointments }}</h2>
-                  </div>
+                <div class="stat-card">
+                  <i class="bi bi-check-circle display-4 text-info"></i>
+                  <h6>Hoàn Thành</h6>
+                  <h3 class="text-info">{{ stats.completedAppointments }}</h3>
                 </div>
               </div>
             </div>
@@ -166,7 +160,6 @@
                 <i class="bi bi-receipt"></i> Quản Lý Hóa Đơn
               </router-link>
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -248,20 +241,120 @@ export default {
 </script>
 
 <style scoped>
-.display-4 {
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+}
+
+.stat-card i {
   font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.stat-card h6 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.stat-card h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
 }
 
 .card {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
   margin-bottom: 20px;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .progress-bar {
   background-color: #3498db;
+  height: 8px;
+  border-radius: 4px;
 }
 
 .btn {
+  border-radius: 8px;
+  transition: all 0.3s ease;
   margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.text-muted {
+  color: #6c757d;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #e9ecef !important;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.justify-content-between {
+  justify-content: space-between;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.pb-3 {
+  padding-bottom: 1rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-4 {
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .stat-card {
+    margin-bottom: 15px;
+  }
+
+  .stat-card h3 {
+    font-size: 1.5rem;
+  }
+
+  .stat-card i {
+    font-size: 2rem;
+  }
 }
 </style>

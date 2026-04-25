@@ -7,6 +7,7 @@
         <h2 class="mb-0">
           <i class="bi bi-calendar-event"></i> Quản Lý Lịch Hẹn
         </h2>
+        <small class="text-muted">Quản lý và cập nhật trạng thái tất cả lịch hẹn dịch vụ</small>
       </div>
 
       <div class="card">
@@ -26,14 +27,19 @@
           </div>
 
           <!-- Filters -->
-          <div v-else class="row mb-3 g-3">
-            <div class="col-md-4">
-              <input 
-                v-model="filters.search" 
-                type="text" 
-                class="form-control" 
-                placeholder="Tìm kiếm khách hàng hoặc thú cưng"
-              >
+          <div v-else class="row mb-4 g-3">
+            <div class="col-md-5">
+              <div class="input-group">
+                <span class="input-group-text bg-white">
+                  <i class="bi bi-search"></i>
+                </span>
+                <input 
+                  v-model="filters.search" 
+                  type="text" 
+                  class="form-control" 
+                  placeholder="Tìm kiếm khách hàng hoặc thú cưng..."
+                >
+              </div>
             </div>
             <div class="col-md-4">
               <select v-model="filters.status" class="form-select">
@@ -45,9 +51,9 @@
                 <option value="cancelled">Hủy</option>
               </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <button @click="fetchAppointments" class="btn btn-primary w-100">
-                <i class="bi bi-arrow-clockwise"></i> Làm Tươi
+                <i class="bi bi-arrow-clockwise"></i> Tải Lại
               </button>
             </div>
           </div>
@@ -352,9 +358,60 @@ export default {
 </script>
 
 <style scoped>
+.input-group-text {
+  border-right: none;
+  border-color: #dee2e6;
+}
+
+.input-group .form-control {
+  border-left: none;
+}
+
+.input-group .form-control:focus {
+  border-left: none;
+}
+
 .btn-group-sm > .btn {
   padding: 0.25rem 0.5rem;
   font-size: 0.875rem;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table thead {
+  background: linear-gradient(90deg, #2c3e50, #34495e);
+  color: white;
+}
+
+.table thead th {
+  border: none;
+  font-weight: 600;
+  padding: 15px;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+  transform: scale(1.01);
+}
+
+.table tbody td {
+  padding: 15px;
+  vertical-align: middle;
+}
+
+.badge {
+  padding: 0.35rem 0.65rem;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .modal {
@@ -372,5 +429,90 @@ export default {
   display: flex;
   align-items: center;
   min-height: calc(100% - 1rem);
+}
+
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 2px solid #e9ecef;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.modal-header .modal-title {
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.form-control,
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alert-info {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .table {
+    font-size: 0.9rem;
+  }
+
+  .table tbody td {
+    padding: 10px;
+  }
+
+  .btn-group-sm {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .btn-group-sm > .btn {
+    margin-bottom: 4px;
+    margin-right: 4px;
+  }
 }
 </style>

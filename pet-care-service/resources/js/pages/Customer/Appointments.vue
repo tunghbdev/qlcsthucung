@@ -1,15 +1,17 @@
 <template>
-  <div class="container-fluid mt-5">
-    <div class="row">
-      <div class="col-md-3">
-        <SidebarNav :userRole="userRole" />
+  <div class="container-fluid py-4">
+    <SidebarNav />
+
+    <div class="main-content">
+      <div class="page-header mb-4">
+        <h2 class="mb-0">
+          <i class="bi bi-calendar-event"></i> Đặt Lịch Dịch Vụ
+        </h2>
+        <small class="text-muted">Quản lý lịch hẹn dịch vụ cho thú cưng của bạn</small>
       </div>
-      <div class="col-md-9">
-        <div class="card">
-          <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Đặt Lịch Dịch Vụ</h4>
-          </div>
-          <div class="card-body">
+
+      <div class="card">
+        <div class="card-body">
             <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert">
               {{ error }}
               <button type="button" class="btn-close" @click="error = null"></button>
@@ -22,81 +24,111 @@
               Đang xử lý...
             </div>
 
-            <ul class="nav nav-tabs mb-3">
-              <li class="nav-item">
-                <a class="nav-link" :class="{active: activeTab === 'new'}" href="#" @click.prevent="activeTab = 'new'">
-                  Đặt Lịch Mới
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" :class="{active: activeTab === 'list'}" href="#" @click.prevent="activeTab = 'list'">
-                  Lịch Của Tôi
-                </a>
-              </li>
-            </ul>
+          <!-- Tabs -->
+          <ul class="nav nav-tabs mb-4" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                @click="activeTab = 'new'"
+                :class="{ active: activeTab === 'new' }"
+                type="button"
+              >
+                <i class="bi bi-plus-circle"></i> Đặt Lịch Mới
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                @click="activeTab = 'list'"
+                :class="{ active: activeTab === 'list' }"
+                type="button"
+              >
+                <i class="bi bi-list"></i> Lịch Của Tôi
+              </button>
+            </li>
+          </ul>
 
             <!-- Tab: Đặt Lịch Mới -->
-            <div v-show="activeTab === 'new'" class="tab-pane active">
-              <form @submit.prevent="bookAppointment">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label for="pet" class="form-label">Chọn Thú Cưng</label>
-                      <select v-model="booking.petId" class="form-select" id="pet" required :disabled="loading">
-                        <option value="">-- Chọn thú cưng --</option>
-                        <option v-for="pet in pets" :key="pet.id" :value="pet.id">
-                          {{ pet.name }} ({{ pet.type }})
-                        </option>
-                      </select>
-                      <small v-if="pets.length === 0" class="text-muted">Bạn cần thêm thú cưng trước</small>
+            <div v-if="activeTab === 'new'" class="tab-pane fade show active">
+              <div class="row">
+                <div class="col-lg-8 mx-auto">
+                  <form @submit.prevent="bookAppointment" class="booking-form">
+                    <div class="form-section">
+                      <h5 class="form-section-title">Thông Tin Thú Cưng</h5>
+                      <div class="mb-3">
+                        <label for="pet" class="form-label">
+                          <i class="bi bi-paw"></i> Chọn Thú Cưng
+                        </label>
+                        <select v-model="booking.petId" class="form-select" id="pet" required :disabled="loading">
+                          <option value="">-- Chọn thú cưng --</option>
+                          <option v-for="pet in pets" :key="pet.id" :value="pet.id">
+                            {{ pet.name }} ({{ pet.type }})
+                          </option>
+                        </select>
+                        <small v-if="pets.length === 0" class="text-muted">
+                          <i class="bi bi-info-circle"></i> Bạn cần thêm thú cưng trước
+                        </small>
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label for="service" class="form-label">Chọn Dịch Vụ</label>
-                      <select v-model="booking.serviceId" class="form-select" id="service" required :disabled="loading">
-                        <option value="">-- Chọn dịch vụ --</option>
-                        <option v-for="service in services" :key="service.id" :value="service.id">
-                          {{ service.name }} - {{ formatCurrency(service.price) }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
 
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label for="date" class="form-label">Ngày Hẹn</label>
-                      <input v-model="booking.date" type="date" class="form-control" id="date" required :disabled="loading">
+                    <div class="form-section">
+                      <h5 class="form-section-title">Chọn Dịch Vụ</h5>
+                      <div class="mb-3">
+                        <label for="service" class="form-label">
+                          <i class="bi bi-heart"></i> Dịch Vụ
+                        </label>
+                        <select v-model="booking.serviceId" class="form-select" id="service" required :disabled="loading">
+                          <option value="">-- Chọn dịch vụ --</option>
+                          <option v-for="service in services" :key="service.id" :value="service.id">
+                            {{ service.name }} - {{ formatCurrency(service.price) }}
+                          </option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label for="time" class="form-label">Giờ Hẹn</label>
-                      <input v-model="booking.time" type="time" class="form-control" id="time" required :disabled="loading">
+
+                    <div class="form-section">
+                      <h5 class="form-section-title">Lịch Hẹn</h5>
+                      <div class="row">
+                        <div class="col-md-6 mb-3">
+                          <label for="date" class="form-label">
+                            <i class="bi bi-calendar"></i> Ngày Hẹn
+                          </label>
+                          <input v-model="booking.date" type="date" class="form-control" id="date" required :disabled="loading">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                          <label for="time" class="form-label">
+                            <i class="bi bi-clock"></i> Giờ Hẹn
+                          </label>
+                          <input v-model="booking.time" type="time" class="form-control" id="time" required :disabled="loading">
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div class="mb-3">
-                  <label for="notes" class="form-label">Ghi Chú Thêm</label>
-                  <textarea v-model="booking.notes" class="form-control" id="notes" rows="3" placeholder="Ghi chú về thú cưng hoặc dịch vụ..." :disabled="loading"></textarea>
-                </div>
+                    <div class="form-section">
+                      <h5 class="form-section-title">Ghi Chú Thêm</h5>
+                      <div class="mb-3">
+                        <label for="notes" class="form-label">
+                          <i class="bi bi-chat"></i> Ghi Chú (Tùy Chọn)
+                        </label>
+                        <textarea v-model="booking.notes" class="form-control" id="notes" rows="3" placeholder="Mô tả tình trạng thú cưng hoặc yêu cầu đặc biệt..." :disabled="loading"></textarea>
+                      </div>
+                    </div>
 
-                <button type="submit" class="btn btn-primary" :disabled="loading">
-                  <i class="bi bi-check2"></i> Xác Nhận Đặt Lịch
-                </button>
-              </form>
+                    <button type="submit" class="btn btn-primary btn-lg w-100" :disabled="loading">
+                      <i class="bi bi-check2"></i> Xác Nhận Đặt Lịch
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
 
             <!-- Tab: Lịch Của Tôi -->
-            <div v-show="activeTab === 'list'" class="tab-pane active">
+            <div v-if="activeTab === 'list'" class="tab-pane fade show active">
               <div v-if="myAppointments.length === 0" class="alert alert-info">
-                Bạn chưa có lịch hẹn nào. Hãy đặt lịch mới!
+                <i class="bi bi-inbox"></i> Bạn chưa có lịch hẹn nào. Hãy đặt lịch mới!
               </div>
-              <table v-else class="table table-hover">
-                <thead>
+              <table v-else class="table table-hover table-striped">
+                <thead class="table-dark">
                   <tr>
                     <th>Thú Cưng</th>
                     <th>Dịch Vụ</th>
@@ -108,9 +140,16 @@
                 </thead>
                 <tbody>
                   <tr v-for="apt in myAppointments" :key="apt.id">
-                    <td>{{ apt.pet?.name }} ({{ apt.pet?.type }})</td>
+                    <td>
+                      <i class="bi bi-paw"></i> {{ apt.pet?.name }} 
+                      <small class="d-block text-muted">({{ apt.pet?.type }})</small>
+                    </td>
                     <td>{{ apt.service?.name }}</td>
-                    <td>{{ apt.appointment_date }} {{ apt.appointment_time }}</td>
+                    <td>
+                      {{ apt.appointment_date }}
+                      <br>
+                      <strong>{{ apt.appointment_time }}</strong>
+                    </td>
                     <td>
                       <span :class="'badge bg-' + getStatusColor(apt.status)">
                         {{ getStatusLabel(apt.status) }}
@@ -118,19 +157,32 @@
                     </td>
                     <td>{{ formatCurrency(apt.service?.price || 0) }}</td>
                     <td>
-                      <button v-if="apt.status === 'pending' || apt.status === 'confirmed'" @click="cancelAppointment(apt.id)" class="btn btn-sm btn-danger" :disabled="loading">
-                        <i class="bi bi-x"></i> Hủy
-                      </button>
-                      <button v-if="apt.status === 'completed'" @click="feedbackAppointment(apt.id)" class="btn btn-sm btn-info" :disabled="loading">
-                        <i class="bi bi-chat"></i> Đánh Giá
-                      </button>
-                      <span v-else class="text-muted">-</span>
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button 
+                          v-if="apt.status === 'pending' || apt.status === 'confirmed'" 
+                          @click="cancelAppointment(apt.id)" 
+                          class="btn btn-outline-danger" 
+                          :disabled="loading"
+                          title="Hủy lịch hẹn"
+                        >
+                          <i class="bi bi-x"></i> Hủy
+                        </button>
+                        <button 
+                          v-if="apt.status === 'completed'" 
+                          @click="feedbackAppointment(apt.id)" 
+                          class="btn btn-outline-info" 
+                          :disabled="loading"
+                          title="Đánh giá dịch vụ"
+                        >
+                          <i class="bi bi-chat"></i> Đánh Giá
+                        </button>
+                        <span v-else class="text-muted">-</span>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -279,37 +331,175 @@ export default {
 </script>
 
 <style scoped>
-.card {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.page-header {
+  margin-bottom: 30px;
 }
 
-.nav-link {
-  color: #495057;
-  cursor: pointer;
+.booking-form {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.nav-link.active {
-  color: #0d6efd;
-  border-bottom: 2px solid #0d6efd;
+.form-section {
+  margin-bottom: 25px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.form-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-section-title i {
+  color: var(--primary-color);
+}
+
+.form-label {
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-label i {
+  color: var(--primary-color);
+  font-size: 1.1rem;
+}
+
+.form-control,
+.form-select {
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .table {
-  background-color: white;
+  margin-bottom: 0;
 }
 
-.btn-sm {
-  padding: 5px 10px;
+.table thead th {
+  background: linear-gradient(90deg, #2c3e50, #34495e);
+  color: white;
+  border: none;
+  font-weight: 600;
+  padding: 15px;
 }
-</style>
 
-<style scoped>
-.card {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+  transform: scale(1.01);
+}
+
+.table tbody td {
+  padding: 15px;
+  vertical-align: middle;
+}
+
+.btn-group-sm > .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.badge {
+  padding: 0.35rem 0.65rem;
+  border-radius: 12px;
+  font-weight: 500;
 }
 
 .nav-link {
-  color: #495057;
   cursor: pointer;
+  color: #666;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px !important;
+}
+
+.nav-link:hover {
+  color: var(--primary-color);
+}
+
+.nav-link.active {
+  color: var(--primary-color);
+  border-bottom: 3px solid var(--primary-color);
+  font-weight: 600;
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alert i {
+  font-size: 1.5rem;
+}
+
+.alert-info {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.btn-lg {
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-lg:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.text-muted {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.d-block {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .booking-form {
+    padding: 15px;
+  }
+
+  .form-section {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+  }
+
+  .btn-lg {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+
+  .table {
+    font-size: 0.9rem;
+  }
+
+  .table tbody td {
+    padding: 10px;
+  }
 }
 
 .nav-link.active {

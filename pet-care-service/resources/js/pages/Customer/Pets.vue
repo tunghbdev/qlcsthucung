@@ -1,33 +1,42 @@
 <template>
-  <div class="container-fluid mt-5">
-    <div class="row">
-      <div class="col-md-3">
-        <SidebarNav :userRole="userRole" />
+  <div class="container-fluid py-4">
+    <SidebarNav />
+
+    <div class="main-content">
+      <div class="page-header mb-4">
+        <h2 class="mb-0">
+          <i class="bi bi-paw"></i> Quản Lý Thú Cưng
+        </h2>
+        <small class="text-muted">Quản lý thông tin các thú cưng của bạn</small>
       </div>
-      <div class="col-md-9">
-        <div class="card">
-          <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Quản Lý Thú Cưng Của Tôi</h4>
+
+      <div class="card">
+        <div class="card-body">
+          <!-- Error Alert -->
+          <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" @click="error = null"></button>
           </div>
-          <div class="card-body">
-            <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert">
-              {{ error }}
-              <button type="button" class="btn-close" @click="error = null"></button>
+
+          <!-- Loading -->
+          <div v-if="loading" class="alert alert-info">
+            <div class="spinner-border spinner-border-sm" role="status">
+              <span class="visually-hidden">Đang tải...</span>
             </div>
+            Đang xử lý...
+          </div>
 
-            <div v-if="loading" class="alert alert-info">
-              <div class="spinner-border spinner-border-sm" role="status">
-                <span class="visually-hidden">Đang tải...</span>
-              </div>
-              Đang xử lý...
-            </div>
+          <button 
+            @click="showAddForm = true" 
+            class="btn btn-primary mb-4" 
+            :disabled="loading"
+          >
+            <i class="bi bi-plus-circle"></i> Thêm Thú Cưng Mới
+          </button>
 
-            <button @click="showAddForm = true" class="btn btn-success mb-3" :disabled="loading">
-              <i class="bi bi-plus"></i> Thêm Thú Cưng Mới
-            </button>
-
-            <div v-if="showAddForm" class="card mb-3 border-success">
-              <div class="card-header bg-success text-white">
+          <!-- Add Pet Form -->
+          <div v-if="showAddForm" class="card mb-4 border border-primary">
+            <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">Thêm Thú Cưng Mới</h5>
               </div>
               <div class="card-body">
@@ -167,7 +176,6 @@
                 </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -321,29 +329,139 @@ export default {
 </script>
 
 <style scoped>
+.pet-card {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+}
+
+.pet-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #0d6efd;
+  transform: translateY(-2px);
+}
+
+.pet-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.pet-card-header h6 {
+  margin: 0;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.pet-info {
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
 .card {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
   margin-bottom: 20px;
 }
 
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
 .card-header {
-  background-color: #f8f9fa;
+  background: linear-gradient(90deg, #0d6efd, #0b5ed7);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  padding: 15px 20px;
+  font-weight: 600;
+}
+
+.btn {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #0d6efd, #0b5ed7);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.form-control,
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alert-success {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.text-muted {
+  color: #6c757d;
+  font-size: 0.9rem;
 }
 
 .btn-group {
   display: flex;
+  gap: 8px;
 }
 
 .btn-group .btn {
   flex: 1;
-  border-radius: 0;
+  border-radius: 8px;
 }
 
-.btn-group .btn:first-child {
-  border-radius: 0.25rem 0 0 0.25rem;
-}
+@media (max-width: 768px) {
+  .pet-card {
+    padding: 15px;
+  }
 
-.btn-group .btn:last-child {
-  border-radius: 0 0.25rem 0.25rem 0;
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .btn-group .btn {
+    margin-bottom: 8px;
+  }
 }
 </style>

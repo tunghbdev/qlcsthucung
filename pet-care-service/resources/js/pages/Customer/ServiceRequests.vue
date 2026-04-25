@@ -4,7 +4,10 @@
 
     <div class="main-content">
       <div class="page-header mb-4">
-        <h2 class="mb-0">Yêu Cầu Dịch Vụ</h2>
+        <h2 class="mb-0">
+          <i class="bi bi-envelope"></i> Yêu Cầu Dịch Vụ
+        </h2>
+        <small class="text-muted">Gửi yêu cầu dịch vụ cho thú cưng của bạn</small>
       </div>
 
       <div class="card">
@@ -393,15 +396,125 @@ export default {
 .nav-link {
   cursor: pointer;
   color: #666;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px !important;
+  border-bottom: 3px solid transparent;
+}
+
+.nav-link:hover {
+  color: #0d6efd;
 }
 
 .nav-link.active {
   color: #0d6efd;
-  border-bottom: 2px solid #0d6efd;
+  border-bottom-color: #0d6efd;
+  font-weight: 600;
 }
 
 .card {
   border: 1px solid #dee2e6;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #0d6efd;
+}
+
+.card-header {
+  background: linear-gradient(90deg, #0d6efd, #0b5ed7);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  padding: 15px 20px;
+  font-weight: 600;
+  border: none;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.form-control,
+.form-select {
   border-radius: 8px;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.badge {
+  padding: 0.35rem 0.65rem;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #0d6efd, #0b5ed7);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.btn-success {
+  background: linear-gradient(90deg, #198754, #0d6d3a);
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+}
+
+.btn-danger {
+  background: linear-gradient(90deg, #dc3545, #c92a2a);
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.text-muted {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .card {
+    margin-bottom: 15px;
+  }
+
+  .btn {
+    margin-bottom: 8px;
+  }
 }
 </style>
