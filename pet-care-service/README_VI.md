@@ -3,7 +3,6 @@
 Website quản lý dịch vụ chăm sóc thú cưng được xây dựng với Laravel 10 và Vue.js 3, hỗ trợ 3 vai trò: Admin, Khách Hàng, và Nhân Viên.
 
 ## Công Nghệ Sử Dụng
-
 - **Backend**: Laravel 10
 - **Frontend**: Vue.js 3
 - **Database**: MySQL (XAMPP)
